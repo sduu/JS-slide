@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>JS Slide Demo</title>
+	<link rel="stylesheet" href="./css/jsSlide.min.css" />
+	<script src="./js/jsSlide.min.js"></script>
+	<style>
+		.wrapper {max-width: 1020px; margin: 0 auto;}
+		.slide-cont .slide-wrap {width: 100%; height: 675px;}
+		.slide-cont .controls {text-align: center;}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+		<div class="slide-cont">
+			<div class="slide-wrap">
+				<ul class="slide">
+					<li><img src="./images/slide_01.jpg" alt=""></li>
+					<li><img src="./images/slide_02.jpg" alt=""></li>
+					<li><img src="./images/slide_03.jpg" alt=""></li>
+					<li><img src="./images/slide_04.jpg" alt=""></li>
+					<li><img src="./images/slide_05.jpg" alt=""></li>
+				</ul>
+				<button class="btn-prev" type="button"><span class="screen-out">이전 슬라이드</span></button>
+				<button class="btn-next" type="button"><span class="screen-out">다음 슬라이드</span></button>
+			</div>
+
+			<div class="controls">
+				<ul class="indicator"></ul>
+				<button class="btn-timer" type="button" aria-pressed="true" aria-label="자동 재생 일시 정지"></button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const initSlide = new JsSlide();
+	</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+.slide-cont {position: relative;}
+.slide-cont button {display: block; padding: 0; border: none; cursor: pointer; background-color: transparent;}
+.slide-cont ul {margin: 0; padding: 0;}
+.slide-cont li {list-style: none;}
+
+.slide-cont .screen-out {position: absolute; width: 1px; height: 1px; margin: 0; clip: rect(0, 0, 0, 0); overflow: hidden; white-space: nowrap;}
+.slide-cont .slide-wrap {position: relative; overflow: hidden;}
+.slide-cont .slide li {position: absolute; top: 0; left: 0;}
+.slide-cont .indicator {display: inline-block; vertical-align: middle;}
+.slide-cont .indicator li {float: left;}
+.slide-cont .indicator li + li {margin-left: 8px;}
+.slide-cont .indicator li button {width: 10px; height: 10px; border-radius: 4px; background-color: #ccc; transition: 0.3s;}
+.slide-cont .indicator li.active button{width: 25px; background-color: #333;}
+.slide-cont .btn-timer {display: inline-block; margin-left: 10px; width: 16px; height: 16px; vertical-align: middle; background: url('../images/btn_play.png') no-repeat center center;}
+.slide-cont .btn-timer.active {background-image: url('../images/btn_pause.png');}
+.slide-cont .btn-prev {position: absolute; top: 50%; transform: translateY(-50%); left: 10px; width: 40px; height: 62px; background: url('../images/btn_prev.png') no-repeat 0 0;}
+.slide-cont .btn-next {position: absolute; top: 50%; transform: translateY(-50%); right: 10px; width: 40px; height: 62px; background: url('../images/btn_next.png') no-repeat 0 0;}
+.slide-cont .btn-prev.btn-disabled,
+.slide-cont .btn-next.btn-disabled {cursor: default; opacity: 0;}
