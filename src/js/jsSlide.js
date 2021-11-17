@@ -2,6 +2,8 @@ class JsSlide {
 	constructor(el = '.slide-cont', option) {
 		this.option = {
 			infinite: false,
+			timer: false,
+			timerSpeed: 2000,
 			duration: 500,
 			start: 1,
 			...option,
@@ -15,6 +17,7 @@ class JsSlide {
 			btnNext: this.$wrap.querySelector('.btn-next'),
 			indicator: this.$wrap.querySelector('.indicator'),
 			indicatorItem: null,
+			btnTimer: this.$wrap.querySelector('.btn-timer'),
 		}
 
 		this.slideNow = 0;
@@ -30,6 +33,7 @@ class JsSlide {
 
 		/* 초기화 */
 		this.setSlide();
+		this.setTimer();
 		this.bindEvent();
 		this.showSlide(this.option.start);
 	}
@@ -59,6 +63,10 @@ class JsSlide {
 				this.showSlide(i + 1);
 			});
 		});
+		this.$el.btnTimer.addEventListener('click', () => {
+			this.option.timer = !this.option.timer;
+			this.setTimer();
+		});
 	}
 
 	showSlide(n) {
@@ -67,9 +75,21 @@ class JsSlide {
 			return false;
 		}
 
+		/* 무한 루프 슬라이드가 아니면 끝에서 자동 재생 정지 */
+		if (this.isBlockNext) {
+			this.option.timer = false;
+			this.setTimer();
+		}
+
 		/* 무한 루프 슬라이드가 아니면 처음과 끝에서 return */
 		if (this.isBlockPrev && this.direction == 'prev' || this.isBlockNext && this.direction == 'next') {
 			return false;
+		}
+
+		/* 자동재생 */
+		this.stopTimer();
+		if (this.option.timer) {
+			this.playTimer();
 		}
 		
 		this.moveFade(n);
@@ -157,5 +177,26 @@ class JsSlide {
 			this.$el.btnNext.classList.add('btn-disabled');
 			this.isBlockNext = true;
 		}
+	}
+
+	setTimer() {
+		if (this.option.timer) {
+			this.playTimer();
+			this.$el.btnTimer.classList.add('active');
+			this.$el.btnTimer.setAttribute('aria-pressed', false);
+		} else {
+			this.stopTimer();
+			this.$el.btnTimer.classList.remove('active');
+			this.$el.btnTimer.setAttribute('aria-pressed', true);
+		}
+	}
+
+	playTimer() {
+		this.direction = 'next';
+		this.timer = setTimeout(() => {this.showSlide(this.slideNext)}, this.option.timerSpeed);
+	}
+
+	stopTimer() {
+		clearTimeout(this.timer);
 	}
 } 
