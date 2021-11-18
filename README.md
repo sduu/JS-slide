@@ -88,6 +88,11 @@ option | object |   | 슬라이드 옵션
 
 Key | Type | Default | Description
 ---- | ---- | ---- | ----
+type | string | 'carousel' | 전환 효과 : 'carousel' = 캐러셀, 'fade' = 페이드
+timer | boolean | false | 슬라이드 자동 재생 활성화
+timerSpeed | int | 2000 | 자동 재생 시간
 infinite | boolean | false | 무한 반복 활성화
 duration | int | 500 | 슬라이드 전환 시간
 start | int | 1 | 시작 인덱스
+show | int | 1 | 한 번에 표시할 슬라이드 수
+between | int | 0 | 슬라이드 간격
