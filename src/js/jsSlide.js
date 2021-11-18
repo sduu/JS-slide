@@ -7,6 +7,7 @@ class JsSlide {
 			timerSpeed: 2000,
 			duration: 500,
 			start: 1,
+			show: 1,
 			...option,
 		}
 
@@ -28,6 +29,7 @@ class JsSlide {
 		this.slideNum = this.$el.slideItem.length;
 
 		this.rectSlide = {};
+		this.itemWidth = 0;
 
 		this.timer = null;
 		this.direction = null;
@@ -44,7 +46,10 @@ class JsSlide {
 	}
 
 	setSlide() {
+		this.option.show = this.option.type == 'fade' ? 1 : this.option.show;
+		console.log(this.option.show);
 		this.rectSlide = getRect(this.$el.slide);
+		this.itemWidth = this.rectSlide.width / this.option.show;
 
 		[...this.$el.slideItem].forEach((item, i) => {
 			item.setAttribute('data-slide-index', i);
@@ -52,17 +57,31 @@ class JsSlide {
 			this.$el.indicator.innerHTML += `<li><button type="button"><span class="screen-out">총 ${this.slideNum}장의 슬라이드 중 ${i + 1}번째 슬라이드</span></button></li>`;
 
 			if (this.option.type == 'carousel') {
-				item.style.left = `${this.rectSlide.width * i}px`;
+				item.style.width = `${this.itemWidth}px`;
+				item.style.left = `${this.itemWidth * i}px`;
 			}
 		});
 
 		/* 무한 루프 슬라이드면 duplication 생성 */
 		if (this.option.infinite && this.option.type == 'carousel') {
-			const slideAppend = this.$el.slideItem[this.slideNum - 1];
-			const slidePrepend = this.$el.slideItem[0];
+			const slideAppend = [...this.$el.slideItem].filter((item, i) => i < this.option.show);
+			const slidePrepend = [...this.$el.slideItem].reverse().filter((item, i) => i < this.option.show);
 
-			this.$el.slide.appendChild(slidePrepend.cloneNode(true)).style.left = `${this.rectSlide.width * this.slideNum}px`;
-			this.$el.slide.insertBefore(slideAppend.cloneNode(true), this.$el.slide.firstChild).style.left = `${-this.rectSlide.width}px`;
+			slideAppend.forEach((item, i) => {
+				const duplication = this.$el.slide.appendChild(item.cloneNode(true));
+				duplication.style.left = `${this.itemWidth * this.slideNum + this.itemWidth * i}px`;
+			});
+			slidePrepend.forEach((item, i) => {
+				const duplication = this.$el.slide.insertBefore(item.cloneNode(true), this.$el.slide.firstChild);
+				duplication.style.left = `${-this.itemWidth * (i + 1)}px`;
+			});
+		} else if (!this.option.infinite && this.option.type == 'carousel') {
+			/* 무한 루프 슬라이드가 아니면 indicator 개수 조절 */
+			[...this.$wrap.querySelectorAll('.indicator li')].forEach((item, i, object) => {
+				if (i > this.slideNum - this.option.show) {
+					object[i].remove();
+				}
+			});
 		}
 
 		this.$el.indicatorItem = this.$wrap.querySelectorAll('.indicator li');
@@ -190,7 +209,7 @@ class JsSlide {
 				diff = 1;
 			}
 
-			this.$el.slide.style.transform = `translate3d(${-this.rectSlide.width * (exIndex - 1) + (diff * this.rectSlide.width * easing)}px, 0, 0)`;
+			this.$el.slide.style.transform = `translate3d(${-this.itemWidth * (exIndex - 1) + (diff * this.itemWidth * easing)}px, 0, 0)`;
 
 			if (runtime < this.option.duration) {
 				frame = window.requestAnimationFrame(step);
@@ -240,7 +259,9 @@ class JsSlide {
 		if (this.slideNow == 1) {
 			this.$el.btnPrev.classList.add('btn-disabled');
 			this.isBlockPrev = true;
-		} else if (this.slideNow == this.slideNum) {
+		}
+
+		if (this.slideNow > this.slideNum - this.option.show) {
 			this.$el.btnNext.classList.add('btn-disabled');
 			this.isBlockNext = true;
 		}
