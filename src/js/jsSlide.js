@@ -1,6 +1,7 @@
 class JsSlide {
 	constructor(el = '.slide-cont', option) {
 		this.option = {
+			type: 'carousel',
 			infinite: false,
 			timer: false,
 			timerSpeed: 2000,
@@ -13,6 +14,7 @@ class JsSlide {
 		this.$el = {
 			slide: this.$wrap.querySelector('.slide'),
 			slideItem: this.$wrap.querySelectorAll('.slide li'),
+			slideItemDub: null,
 			btnPrev: this.$wrap.querySelector('.btn-prev'),
 			btnNext: this.$wrap.querySelector('.btn-next'),
 			indicator: this.$wrap.querySelector('.indicator'),
@@ -25,6 +27,9 @@ class JsSlide {
 		this.slideNext = 0;
 		this.slideNum = this.$el.slideItem.length;
 
+		this.rectSlide = {};
+
+		this.timer = null;
 		this.direction = null;
 
 		this.isAnimating = false;
@@ -39,13 +44,29 @@ class JsSlide {
 	}
 
 	setSlide() {
+		this.rectSlide = getRect(this.$el.slide);
+
 		[...this.$el.slideItem].forEach((item, i) => {
 			item.setAttribute('data-slide-index', i);
 
 			this.$el.indicator.innerHTML += `<li><button type="button"><span class="screen-out">총 ${this.slideNum}장의 슬라이드 중 ${i + 1}번째 슬라이드</span></button></li>`;
+
+			if (this.option.type == 'carousel') {
+				item.style.left = `${this.rectSlide.width * i}px`;
+			}
 		});
 
+		/* 무한 루프 슬라이드면 duplication 생성 */
+		if (this.option.infinite && this.option.type == 'carousel') {
+			const slideAppend = this.$el.slideItem[this.slideNum - 1];
+			const slidePrepend = this.$el.slideItem[0];
+
+			this.$el.slide.appendChild(slidePrepend.cloneNode(true)).style.left = `${this.rectSlide.width * this.slideNum}px`;
+			this.$el.slide.insertBefore(slideAppend.cloneNode(true), this.$el.slide.firstChild).style.left = `${-this.rectSlide.width}px`;
+		}
+
 		this.$el.indicatorItem = this.$wrap.querySelectorAll('.indicator li');
+		this.$el.slideItemDub = this.$wrap.querySelectorAll('.slide li');
 	}
 
 	bindEvent() {
@@ -92,7 +113,13 @@ class JsSlide {
 			this.playTimer();
 		}
 		
-		this.moveFade(n);
+		/* 슬라이드 전환 타입  */
+		if (this.option.type == 'carousel') {
+			this.moveCarousel(n);
+		} else if (this.option.type == 'fade') {
+			this.moveFade(n);
+		}
+
 		this.setIndex(n);
 		this.setIndicator();
 
@@ -137,6 +164,46 @@ class JsSlide {
 		/* 슬라이드가 처음 로드되었을때 애니메이션 없음 */
 		if (this.slideNow === 0) {
 			this.$el.slideItem[n - 1].style.opacity = 1;
+			cancelAnimationFrame(frame);
+		}
+	}
+
+	moveCarousel(n) {
+		const exIndex = this.slideNow;
+		let diff = exIndex - n;
+		let start = null;
+		let frame = null;
+
+		const step = (timestamp) => {
+			if (!start) {
+				start = timestamp;
+				this.animationStart();
+			}
+
+			const runtime = timestamp - start;
+			const progress = runtime / this.option.duration;
+			const easing = inOutQuad(Math.min(progress, 1));
+
+			if (this.option.infinite && exIndex == this.slideNum && this.direction == 'next') {
+				diff = -1;
+			} else if (this.option.infinite && exIndex == 1 && this.direction == 'prev') {
+				diff = 1;
+			}
+
+			this.$el.slide.style.transform = `translate3d(${-this.rectSlide.width * (exIndex - 1) + (diff * this.rectSlide.width * easing)}px, 0, 0)`;
+
+			if (runtime < this.option.duration) {
+				frame = window.requestAnimationFrame(step);
+			} else {
+				this.animationEnd();
+			}
+		};
+
+		frame = window.requestAnimationFrame(step);
+
+		/* 슬라이드가 처음 로드되었을때 애니메이션 없음 */
+		if (this.slideNow === 0) {
+			this.$el.slide.style.transform = `translate3d(${-(n - 1) * this.rectSlide.width}px, 0, 0)`;
 			cancelAnimationFrame(frame);
 		}
 	}
