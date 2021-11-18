@@ -8,6 +8,7 @@ class JsSlide {
 			duration: 500,
 			start: 1,
 			show: 1,
+			between: 0,
 			...option,
 		}
 
@@ -58,7 +59,7 @@ class JsSlide {
 
 			if (this.option.type == 'carousel') {
 				item.style.width = `${this.itemWidth}px`;
-				item.style.left = `${this.itemWidth * i}px`;
+				item.style.left = `${(this.itemWidth + this.option.between) * i}px`;
 			}
 		});
 
@@ -69,11 +70,11 @@ class JsSlide {
 
 			slideAppend.forEach((item, i) => {
 				const duplication = this.$el.slide.appendChild(item.cloneNode(true));
-				duplication.style.left = `${this.itemWidth * this.slideNum + this.itemWidth * i}px`;
+				duplication.style.left = `${(this.itemWidth + this.option.between) * this.slideNum + (this.itemWidth + this.option.between) * i}px`;
 			});
 			slidePrepend.forEach((item, i) => {
 				const duplication = this.$el.slide.insertBefore(item.cloneNode(true), this.$el.slide.firstChild);
-				duplication.style.left = `${-this.itemWidth * (i + 1)}px`;
+				duplication.style.left = `${-(this.itemWidth + this.option.between) * (i + 1)}px`;
 			});
 		} else if (!this.option.infinite && this.option.type == 'carousel') {
 			/* 무한 루프 슬라이드가 아니면 indicator 개수 조절 */
@@ -209,7 +210,7 @@ class JsSlide {
 				diff = 1;
 			}
 
-			this.$el.slide.style.transform = `translate3d(${-this.itemWidth * (exIndex - 1) + (diff * this.itemWidth * easing)}px, 0, 0)`;
+			this.$el.slide.style.transform = `translate3d(${-(this.itemWidth + this.option.between) * (exIndex - 1) + (diff * (this.itemWidth + this.option.between) * easing)}px, 0, 0)`;
 
 			if (runtime < this.option.duration) {
 				frame = window.requestAnimationFrame(step);
