@@ -16,6 +16,7 @@ class JsSlide {
 
 		this.$wrap = document.querySelector(el);
 		this.$el = {
+			slideWrap: this.$wrap.querySelector('.slide-wrap'),
 			slide: this.$wrap.querySelector('.slide'),
 			slideItem: this.$wrap.querySelectorAll('.slide li'),
 			slideItemDub: null,
@@ -40,6 +41,7 @@ class JsSlide {
 		this.drag = 0;
 
 		this.timer = null;
+		this.timerResize = null;
 		this.direction = null;
 
 		this.isAnimating = false;
@@ -48,28 +50,18 @@ class JsSlide {
 		this.clicked = false;
 
 		/* 초기화 */
+		this.initSlide();
 		this.setSlide();
 		this.setTimer();
 		this.bindEvent();
 		this.showSlide(this.option.start);
 	}
 
-	setSlide() {
-		this.option.reactDrag = this.option.type == 'fade' ? false : this.option.reactDrag;
-		this.option.show = this.option.type == 'fade' ? 1 : this.option.show;
-
-		this.rectSlide = getRect(this.$el.slide);
-		this.itemWidth = this.rectSlide.width / this.option.show;
-
+	initSlide() {
 		[...this.$el.slideItem].forEach((item, i) => {
-			item.setAttribute('data-slide-index', i);
+			item.slideIndex = i;
 
 			this.$el.indicator.innerHTML += `<li><button type="button"><span class="screen-out">총 ${this.slideNum}장의 슬라이드 중 ${i + 1}번째 슬라이드</span></button></li>`;
-
-			if (this.option.type == 'carousel') {
-				item.style.width = `${this.itemWidth}px`;
-				item.style.left = `${(this.itemWidth + this.option.between) * i}px`;
-			}
 		});
 
 		/* 무한 루프 슬라이드면 duplication 생성 */
@@ -79,11 +71,11 @@ class JsSlide {
 
 			slideAppend.forEach((item, i) => {
 				const duplication = this.$el.slide.appendChild(item.cloneNode(true));
-				duplication.style.left = `${(this.itemWidth + this.option.between) * this.slideNum + (this.itemWidth + this.option.between) * i}px`;
+				duplication.slideIndex = i;
 			});
 			slidePrepend.forEach((item, i) => {
 				const duplication = this.$el.slide.insertBefore(item.cloneNode(true), this.$el.slide.firstChild);
-				duplication.style.left = `${-(this.itemWidth + this.option.between) * (i + 1)}px`;
+				duplication.slideIndex = this.slideNum - (i + 1);
 			});
 		} else if (!this.option.infinite && this.option.type == 'carousel') {
 			/* 무한 루프 슬라이드가 아니면 indicator 개수 조절 */
@@ -96,6 +88,23 @@ class JsSlide {
 
 		this.$el.indicatorItem = this.$wrap.querySelectorAll('.indicator li');
 		this.$el.slideItemDub = this.$wrap.querySelectorAll('.slide li');
+	}
+
+	setSlide() {
+		this.option.reactDrag = this.option.type == 'fade' ? false : this.option.reactDrag;
+		this.option.show = this.option.type == 'fade' ? 1 : this.option.show;
+
+		this.rectSlide = getRect(this.$el.slideWrap);
+		this.itemWidth = this.rectSlide.width / this.option.show;
+
+		const diff = (this.$el.slideItemDub.length - this.slideNum) / 2;
+
+		if (this.option.type == 'carousel') {
+			[...this.$el.slideItemDub].forEach((item, i) => {
+				item.style.width = `${this.itemWidth}px`;
+				item.style.left = `${((this.itemWidth + this.option.between) * i) - (this.itemWidth + this.option.between) * diff}px`;
+			});
+		}
 	}
 
 	bindEvent() {
@@ -117,6 +126,7 @@ class JsSlide {
 			this.option.timer = !this.option.timer;
 			this.setTimer();
 		});
+		window.addEventListener('resize', () => this.resize());
 		this.$el.slide.addEventListener('mousedown', (e) => this.mouseDown(e));
 		document.addEventListener('mousemove', (e) => this.mouseMove(e));
 		document.addEventListener('mouseup', () => this.mouseUp());
@@ -236,7 +246,7 @@ class JsSlide {
 
 		/* 슬라이드가 처음 로드되었을때 애니메이션 없음 */
 		if (this.slideNow === 0) {
-			this.$el.slide.style.transform = `translate3d(${-(n - 1) * this.rectSlide.width}px, 0, 0)`;
+			this.$el.slide.style.transform = `translate3d(${-(n - 1) * this.itemWidth}px, 0, 0)`;
 			cancelAnimationFrame(frame);
 		}
 	}
@@ -300,6 +310,15 @@ class JsSlide {
 
 	stopTimer() {
 		clearTimeout(this.timer);
+	}
+
+	resize() {
+		clearTimeout(this.timerResize);
+		this.timerResize = setTimeout(() => {
+			this.direction = null;
+			this.setSlide();
+			this.showSlide(this.slideNow);
+		}, 66);
 	}
 
 	mouseDown(e) {
