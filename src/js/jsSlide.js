@@ -3,6 +3,8 @@ class JsSlide {
 		this.option = {
 			type: 'carousel',
 			infinite: false,
+			drag: false,
+			reactDrag: false,
 			timer: false,
 			timerSpeed: 2000,
 			duration: 500,
@@ -32,12 +34,18 @@ class JsSlide {
 		this.rectSlide = {};
 		this.itemWidth = 0;
 
+		this.start = {};
+		this.move = {};
+		this.delta = 0;
+		this.drag = 0;
+
 		this.timer = null;
 		this.direction = null;
 
 		this.isAnimating = false;
 		this.isBlockPrev = false;
 		this.isBlockNext = false;
+		this.clicked = false;
 
 		/* 초기화 */
 		this.setSlide();
@@ -47,8 +55,9 @@ class JsSlide {
 	}
 
 	setSlide() {
+		this.option.reactDrag = this.option.type == 'fade' ? false : this.option.reactDrag;
 		this.option.show = this.option.type == 'fade' ? 1 : this.option.show;
-		console.log(this.option.show);
+
 		this.rectSlide = getRect(this.$el.slide);
 		this.itemWidth = this.rectSlide.width / this.option.show;
 
@@ -108,6 +117,9 @@ class JsSlide {
 			this.option.timer = !this.option.timer;
 			this.setTimer();
 		});
+		this.$el.slide.addEventListener('mousedown', (e) => this.mouseDown(e));
+		document.addEventListener('mousemove', (e) => this.mouseMove(e));
+		document.addEventListener('mouseup', () => this.mouseUp());
 	}
 
 	showSlide(n) {
@@ -124,7 +136,7 @@ class JsSlide {
 
 		/* 무한 루프 슬라이드가 아니면 처음과 끝에서 return */
 		if (this.isBlockPrev && this.direction == 'prev' || this.isBlockNext && this.direction == 'next') {
-			return false;
+			n = this.slideNow;
 		}
 
 		/* 자동재생 */
@@ -181,8 +193,8 @@ class JsSlide {
 
 		frame = window.requestAnimationFrame(step);
 
-		/* 슬라이드가 처음 로드되었을때 애니메이션 없음 */
-		if (this.slideNow === 0) {
+		/* 슬라이드가 처음 로드되었거나 슬라이드 인덱스가 변화 없을 시 애니메이션 없음 */
+		if (this.slideNow === 0 || n == this.slideNow) {
 			this.$el.slideItem[n - 1].style.opacity = 1;
 			cancelAnimationFrame(frame);
 		}
@@ -190,6 +202,7 @@ class JsSlide {
 
 	moveCarousel(n) {
 		const exIndex = this.slideNow;
+		const drag = this.drag;
 		let diff = exIndex - n;
 		let start = null;
 		let frame = null;
@@ -210,7 +223,7 @@ class JsSlide {
 				diff = 1;
 			}
 
-			this.$el.slide.style.transform = `translate3d(${-(this.itemWidth + this.option.between) * (exIndex - 1) + (diff * (this.itemWidth + this.option.between) * easing)}px, 0, 0)`;
+			this.$el.slide.style.transform = `translate3d(${-(this.itemWidth + this.option.between) * (exIndex - 1) + drag + (diff * (this.itemWidth + this.option.between) * easing) - (drag * easing)}px, 0, 0)`;
 
 			if (runtime < this.option.duration) {
 				frame = window.requestAnimationFrame(step);
@@ -287,5 +300,71 @@ class JsSlide {
 
 	stopTimer() {
 		clearTimeout(this.timer);
+	}
+
+	mouseDown(e) {
+		e.preventDefault();
+
+		/* 스와이프가 비활성화 되어있거나 슬라이드가 애니메이션 진행중이면 return */
+		if (!this.option.drag || this.isAnimating) {
+			return false;
+		}
+
+		this.start = getMousePos(e);
+		this.clicked = true;
+	}
+
+	mouseMove(e) {
+		/* 슬라이드를 클릭하지 않았으면 return */
+		if (!this.clicked) {
+			return false;
+		}
+
+		this.move = getMousePos(e);
+
+		/* 커서가 슬라이드 범위를 벗어나면 리셋 */
+		if (this.move.x < this.rectSlide.x || this.move.x > this.rectSlide.width + this.rectSlide.x) {
+			this.delta = 0;
+			return false;
+		} else {
+			this.delta = this.move.x - this.start.x;
+		}
+
+		/* reactDrag 옵션이 비활성화 되어있으면 return */
+		if (!this.option.reactDrag) {
+			return false;
+		}
+
+		this.drag = this.delta;
+
+		/* 무한 루프 슬라이드가 아니면 가장자리에서 저항 추가 */
+		if ((this.isBlockPrev && this.delta > 0) || (this.isBlockNext && this.delta < 0)) {
+			this.delta = this.drag = this.delta / 5;
+		}
+
+		this.$el.slide.style.transform = `translate3d(${-(this.itemWidth + this.option.between) * (this.slideNow - 1) + this.drag}px, 0, 0)`;
+	}
+
+	mouseUp() {
+		/* 슬라이드를 클릭하지 않았으면 return */
+		if (!this.clicked) {
+			return false;
+		}
+
+		if (this.delta < 0) {
+			this.direction = 'next';
+			this.showSlide(this.slideNext);
+		} else if (this.delta > 0) {
+			this.direction = 'prev';
+			this.showSlide(this.slidePrev);
+		} else {
+			this.showSlide(this.slideNow);
+		}
+
+		this.delta = this.drag = 0;
+		this.clicked = false;
+		
+		document.removeEventListener('mousemove', this.mouseMove);
+		document.removeEventListener('mouseup', this.mouseUp);
 	}
 } 
