@@ -310,6 +310,7 @@ class JsSlide {
 			return false;
 		}
 
+		this.direction = null;
 		this.start = getMousePos(e);
 		this.clicked = true;
 	}
