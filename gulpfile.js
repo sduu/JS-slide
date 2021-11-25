@@ -3,7 +3,8 @@ const babel = require("gulp-babel"),
 	  concat = require('gulp-concat'),
 	  uglify = require('gulp-uglify'),
 	  rename = require('gulp-rename'),
-	  minificss = require('gulp-minify-css');
+	  minificss = require('gulp-minify-css'),
+	  autoprefixer = require('gulp-autoprefixer');
 
 /* js 병합 */
 gulp.task('combine:js', (done) => {
@@ -20,6 +21,7 @@ gulp.task('combine:js', (done) => {
 gulp.task('combine:css', (done) => {
 	gulp
 		.src(['src/css/**/*.css'])
+		.pipe(autoprefixer())
 		.pipe(minificss())
 		.pipe(rename('jsSlide.min.css'))
 		.pipe(gulp.dest('dist/css'));
