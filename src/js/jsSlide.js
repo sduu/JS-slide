@@ -37,7 +37,8 @@ class JsSlide {
 
 		this.start = {};
 		this.move = {};
-		this.delta = 0;
+		this.deltaX = 0;
+		this.deltaY = 0;
 		this.drag = 0;
 
 		this.timer = null;
@@ -127,9 +128,9 @@ class JsSlide {
 			this.setTimer();
 		});
 		window.addEventListener('resize', () => this.resize());
-		this.$el.slide.addEventListener('mousedown', (e) => this.mouseDown(e));
-		document.addEventListener('mousemove', (e) => this.mouseMove(e));
-		document.addEventListener('mouseup', () => this.mouseUp());
+		['mousedown', 'touchstart'].forEach((event) => {this.$el.slide.addEventListener(event, (e) => this.mouseDown(e))});
+		['mousemove', 'touchmove'].forEach((event) => {document.addEventListener(event, (e) => this.mouseMove(e), {passive: false})});
+		['mouseup', 'touchend'].forEach((event) => {document.addEventListener(event, () => this.mouseUp())});
 	}
 
 	showSlide(n) {
@@ -322,8 +323,6 @@ class JsSlide {
 	}
 
 	mouseDown(e) {
-		e.preventDefault();
-
 		/* 스와이프가 비활성화 되어있거나 슬라이드가 애니메이션 진행중이면 return */
 		if (!this.option.drag || this.isAnimating) {
 			return false;
@@ -341,13 +340,22 @@ class JsSlide {
 		}
 
 		this.move = getMousePos(e);
+		this.deltaY = this.move.y - this.start.y;
 
 		/* 커서가 슬라이드 범위를 벗어나면 리셋 */
 		if (this.move.x < this.rectSlide.x || this.move.x > this.rectSlide.width + this.rectSlide.x) {
-			this.delta = 0;
+			this.deltaX = 0;
 			return false;
 		} else {
-			this.delta = this.move.x - this.start.x;
+			this.deltaX = this.move.x - this.start.x;
+		}
+
+		/* 세로 스와이프 시 return */
+		if (Math.abs(this.deltaX) > 5 && Math.abs(this.deltaY) < 5) {
+			e.preventDefault();
+		} else if (Math.abs(this.deltaX) < 5 && Math.abs(this.deltaY) > 5) {
+			this.deltaX = 0;
+			return false;
 		}
 
 		/* reactDrag 옵션이 비활성화 되어있으면 return */
@@ -355,11 +363,11 @@ class JsSlide {
 			return false;
 		}
 
-		this.drag = this.delta;
+		this.drag = this.deltaX;
 
 		/* 무한 루프 슬라이드가 아니면 가장자리에서 저항 추가 */
-		if ((this.isBlockPrev && this.delta > 0) || (this.isBlockNext && this.delta < 0)) {
-			this.delta = this.drag = this.delta / 5;
+		if ((this.isBlockPrev && this.deltaX > 0) || (this.isBlockNext && this.deltaX < 0)) {
+			this.deltaX = this.drag = this.deltaX / 5;
 		}
 
 		this.$el.slide.style.transform = `translate3d(${-(this.itemWidth + this.option.between) * (this.slideNow - 1) + this.drag}px, 0, 0)`;
@@ -371,20 +379,20 @@ class JsSlide {
 			return false;
 		}
 
-		if (this.delta < 0) {
+		if (this.deltaX <= 30 && this.deltaX >= -30) {
+			this.showSlide(this.slideNow);
+		} else if (this.deltaX < 30) {
 			this.direction = 'next';
 			this.showSlide(this.slideNext);
-		} else if (this.delta > 0) {
+		} else if (this.deltaX > 30) {
 			this.direction = 'prev';
 			this.showSlide(this.slidePrev);
-		} else {
-			this.showSlide(this.slideNow);
 		}
 
-		this.delta = this.drag = 0;
+		this.deltaX = this.drag = 0;
 		this.clicked = false;
 		
-		document.removeEventListener('mousemove', this.mouseMove);
-		document.removeEventListener('mouseup', this.mouseUp);
+		['mousemove', 'touchmove'].forEach((event) => {document.removeEventListener(event, this.mouseMove)});
+		['mouseup', 'touchend'].forEach((event) => {document.removeEventListener(event, this.mouseUp)});
 	}
 } 
