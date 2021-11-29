@@ -61,6 +61,7 @@ class JsSlide {
 	initSlide() {
 		[...this.$el.slideItem].forEach((item, i) => {
 			item.slideIndex = i;
+			item.querySelector('img').setAttribute('draggable', false);
 
 			this.$el.indicator.innerHTML += `<li><button type="button"><span class="screen-out">총 ${this.slideNum}장의 슬라이드 중 ${i + 1}번째 슬라이드</span></button></li>`;
 		});
