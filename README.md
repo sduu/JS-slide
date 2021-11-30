@@ -89,6 +89,8 @@ option | object |   | 슬라이드 옵션
 Key | Type | Default | Description
 ---- | ---- | ---- | ----
 type | string | 'carousel' | 전환 효과 : 'carousel' = 캐러셀, 'fade' = 페이드
+drag | boolean | false | 스와이프 활성화
+reactDrag | boolean | false | 스와이프 시 슬라이드 밀림 활성화
 timer | boolean | false | 슬라이드 자동 재생 활성화
 timerSpeed | int | 2000 | 자동 재생 시간
 infinite | boolean | false | 무한 반복 활성화
