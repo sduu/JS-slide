@@ -14,6 +14,43 @@ const getMousePos = function(e) {
 	return pos;
 }
 
+const getFocusable = (el, axis) => {
+	let target = el;
+	let focusable;
+	let idx = 0;
+
+	do {
+		if (target == document.body) {
+			break;
+		}
+		focusable = [...target.parentNode.querySelectorAll('a[href], button, input, textarea, select, details, [tabindex]:not([tabindex="-1"])')].filter(el => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden'));
+		if (axis === 'after') {
+			focusable.reverse();
+		}
+		idx = focusable.findIndex((item) => (el.contains(item)));
+		target = target.parentNode;
+	} while (idx === 0);
+
+	return focusable.slice(0, idx)[idx - 1];
+}
+
+const triggerFocus = (el) => {
+	const eventType = "onfocusin" in el ? "focusin" : "focus";
+	const bubbles = "onfocusin" in el;
+	let event;
+
+	if ("createEvent" in document) {
+		event = document.createEvent("Event");
+		event.initEvent(eventType, bubbles, true);
+	}
+	else if ("Event" in window) {
+		event = new Event(eventType, {bubbles: bubbles, cancelable: true});
+	}
+
+	el.focus();
+	el.dispatchEvent(event);
+}
+
 /* easing */
 const inOutQuad = (n) => {
 	n *= 2;
